@@ -1,0 +1,41 @@
+name: Run Test
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v1
+        with:
+          path: ~/.nimble
+          key: ${{ runner.os }}-nimble-${{ hashFiles('*.nimble') }}
+        if: runner.os != 'Windows'
+
+      - uses: jiro4989/setup-nim-action@v1
+
+      - run: nimble -y install nimsimd
+
+      - run: nim doc --project --index ./src/puyo_core.nim
+        if: runner.os == 'Linux'
+
+      - run: nim c -r -d:bmi2=2 -d:avx2=2 ./tests/makeTest.nim
+        if: runner.os == 'Linux'
+
+      - run: nim c -r -d:bmi2=2 -d:avx2=0 ./tests/makeTest.nim
+        if: runner.os == 'Windows'
+
+      - run: nim c -r -d:bmi2=0 -d:avx2=0 ./tests/makeTest.nim
+        if: runner.os == 'macOS'
+
+      - run: nimble -y test
