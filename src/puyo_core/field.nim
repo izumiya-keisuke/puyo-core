@@ -1,7 +1,7 @@
 ## This module implements common functions relating to a field and exports the implementation of a field.
 ## Currently supported implementations are as follows:
-## * `Bitboard <./private/field/bitboard/main.html>`_
-## * `AVX2 <./private/field/avx2/main.html>`_
+## * `Bitboard <./private/field/single/main.html>`_
+## * `AVX2 <./private/field/double/main.html>`_
 ##
 
 import options
@@ -15,9 +15,9 @@ import ./cell
 import ./common
 import ./intrinsic
 when UseAvx2:
-  import ./private/field/avx2/main
+  import ./private/field/double/main
 else:
-  import ./private/field/bitboard/main
+  import ./private/field/single/main
 
 export
   Field,
