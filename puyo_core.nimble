@@ -18,5 +18,12 @@ requires "nimsimd >= 1.2.5"
 
 # Tasks
 
+import os
+import strformat
+
 task test, "Test":
+  let mainFile = "./src/puyo_core.nim".unixToNativePath
+  exec &"nim doc --project --index {mainFile}"
+  rmDir "./src/htmldocs".unixToNativePath
+
   exec "testament all"
