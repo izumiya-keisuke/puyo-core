@@ -4,9 +4,9 @@
 import bitops
 import sequtils
 
-import ../util
 import ../../../../common
 import ../../../../intrinsic
+import ../../../../util
 
 type BinaryField* = tuple
   left: uint64

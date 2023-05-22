@@ -7,10 +7,10 @@ import std/setutils
 
 import nimsimd/avx2
 
-import ./util
 import ../../../common
 import ../../../intrinsic
 import ../../../position
+import ../../../util
 
 type BinaryField* = M256i ## [color1:col0, ..., color1:col7, color2:col0, ..., color2:col7]
 

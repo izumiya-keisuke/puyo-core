@@ -6,9 +6,9 @@ import options
 import std/setutils
 
 when defined(cpu32):
-  import ./cpu32/binaryfield
+  import ./bitboard32/binaryfield
 else:
-  import ./cpu64/binaryfield
+  import ./bitboard64/binaryfield
 import ../../../cell
 import ../../../common
 import ../../../moveResult
