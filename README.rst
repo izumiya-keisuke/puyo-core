@@ -42,10 +42,19 @@ Test
 When compiling :code:`tests/makeTest.nim`, you can specify the instruction set used in testing by giving options:
 :code:`-d:bmi2=<num>` or/and :code:`-d:avx2=<num>`.
 
-=============  ===========
+=============  ==============
 :code:`<num>`  Description
-=============  ===========
+=============  ==============
 0              Not Use
 1              Use
-2              Both
-=============  ===========
+2              Both [default]
+=============  ==============
+
+Also, for performance comparison, it is possible to specify whether or not the test conducted for alternative
+implementations by giving options: :code:`-d:<opt>`.
+
+==============  ============================================================
+:code:`<opt>`   Description
+==============  ============================================================
+altSingleColor  [Bitboard] (Keep binary fields corresponding to each color.)
+==============  ============================================================

@@ -2,6 +2,10 @@
 ## Currently supported implementations are as follows:
 ## * `Bitboard <./private/field/single/main.html>`_
 ## * `AVX2 <./private/field/double/main.html>`_
+## 
+## For performance comparison,
+## alternative implementations can be applied by adding the following options when compiling:
+## * :code:`-d:altSingleColor`: [Bitboard] Keep binary fields corresponding to each color.
 ##
 
 import options
@@ -17,7 +21,10 @@ import ./intrinsic
 when UseAvx2:
   import ./private/field/double/main
 else:
-  import ./private/field/single/main
+  when defined(altSingleColor):
+    import ./alternative/field/singleColor/main
+  else:
+    import ./private/field/single/main
 
 export
   Field,
