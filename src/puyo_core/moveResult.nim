@@ -1,4 +1,4 @@
-## This module implements a moving result.
+## This module implements the moving result.
 ##
 
 import math
@@ -11,35 +11,56 @@ import ./cell
 import ./common
 
 type MoveResult* = tuple
+  ## Moving result.
+  ## * :code:`chainNum`: Number of chains.
+  ## * :code:`totalDisappearNums`: Number of each puyoes that disappeared.
+  ## * :code:`disappearNums`: Number of each puyoes that disappeared in each chain.
+  ## * :code:`detailDisappearNums`: Number of each puyoes in each connected component that disappeared in each chain.
   chainNum: Natural
   totalDisappearNums: Option[array[Puyo, Natural]]
   disappearNums: Option[seq[array[Puyo, Natural]]]
-  detailedDisappearNums: Option[seq[array[Puyo, seq[Natural]]]]
+  detailDisappearNums: Option[seq[array[Puyo, seq[Natural]]]]
+
+# ------------------------------------------------
+# Number
+# ------------------------------------------------
 
 func puyoNum*(res: MoveResult): int {.inline.} =
-  ## Gets the total number of disappeared puyoes.
-  ## This function assumes that :code:`res.totalDisappearNums` is not none.
-  res.totalDisappearNums.get.sum
+  ## Returns the number of puyoes that disappeared.
+  # for performance, we only assert instead of using Option type as the return value.
+  assert res.totalDisappearNums.isSome, "`MoveResult.puyoNum` requires that `MoveResult.totalDisappearNums` be set."
+
+  return res.totalDisappearNums.get.sum
 
 func colorNum*(res: MoveResult): int {.inline.} =
-  ## Gets the total number of disappeared color puyoes.
-  ## This function assumes that :code:`res.totalDisappearNums` is not none.
-  res.totalDisappearNums.get[ColorPuyo.low.Puyo .. ColorPuyo.high.Puyo].sum
+  ## Returns the number of color puyoes that disappeared.
+  # for performance, we only assert instead of using Option type as the return value.
+  assert res.totalDisappearNums.isSome, "`MoveResult.colorNum` requires that `MoveResult.totalDisappearNums` be set."
+
+  return res.totalDisappearNums.get[ColorPuyo.low.Puyo .. ColorPuyo.high.Puyo].sum
 
 func puyoNums*(res: MoveResult): seq[int] {.inline.} =
-  ## Gets the number of disappeared puyoes at each chain.
-  ## This function assumes that :code:`res.disappearNums` is not none.
-  res.disappearNums.get.mapIt it.sum.int
+  ## Returns the number of puyoes that disappeared in each chain.
+  # for performance, we only assert instead of using Option type as the return value.
+  assert res.disappearNums.isSome, "`MoveResult.puyoNums` requires that `MoveResult.disappearNums` be set."
+
+  return res.disappearNums.get.mapIt it.sum.int
 
 func colorNums*(res: MoveResult): seq[int] {.inline.} =
-  ## Gets the number of disappeared color puyoes at each chain.
-  ## This function assumes that :code:`res.disappearNums` is not none.
-  res.disappearNums.get.mapIt it[ColorPuyo.low.Puyo .. ColorPuyo.high.Puyo].sum.int
+  ## Returns the number of color puyoes that disappeared in each chain.
+  # for performance, we only assert instead of using Option type as the return value.
+  assert res.disappearNums.isSome, "`MoveResult.colorNums` requires that `MoveResult.disappearNums` be set."
 
-func calcDisappearNumAndConnectBonus(
-  detailedDisappearNums: seq[Natural],
-): tuple[disappearNum: int, connectBonus: int] {.inline.} =
-  ## Returns the number of disappeared puyoes and a connect bonus.
+  return res.disappearNums.get.mapIt it[ColorPuyo.low.Puyo .. ColorPuyo.high.Puyo].sum.int
+
+# ------------------------------------------------
+# Score
+# ------------------------------------------------
+
+func totalNumAndConnectBonus(
+  numsInConnectComponents: seq[Natural],
+): tuple[totalNum: int, connectBonus: int] {.inline.} =
+  ## Returns the number of puyoes that disappeared and the connect bonus.
   const ConnectBonuses = collect:
     for connect in 0 .. Height.pred * Width:
       if connect <= 4:
@@ -49,13 +70,15 @@ func calcDisappearNumAndConnectBonus(
       else:
         10
 
-  for num in detailedDisappearNums:
-    result.disappearNum.inc num
+  for num in numsInConnectComponents:
+    result.totalNum.inc num
     result.connectBonus.inc ConnectBonuses[num]
 
 func score*(res: MoveResult): int {.inline.} =
   ## Returns the score.
-  ## This function assumes that res.detailedDisappearNums is not none.
+  # for performance, we only assert instead of using Option type as the return value.
+  assert res.detailDisappearNums.isSome, "`MoveResult.score` requires that `MoveResult.detailDisappearNums` be set."
+
   const
     ChainBonuses = collect:
       for chain in 0 .. Height * Width div 4:
@@ -72,15 +95,15 @@ func score*(res: MoveResult): int {.inline.} =
         else:
           3 * 2 ^ (color - 2)
 
-  for i, disappearNumsForEachPuyo in res.detailedDisappearNums.get:
+  for chainIdx, numsInConnectComponentArray in res.detailDisappearNums.get:
     let
-      (redNum, redConnectBonus) = disappearNumsForEachPuyo[RED].calcDisappearNumAndConnectBonus
-      (greenNum, greenConnectBonus) = disappearNumsForEachPuyo[GREEN].calcDisappearNumAndConnectBonus
-      (blueNum, blueConnectBonus) = disappearNumsForEachPuyo[BLUE].calcDisappearNumAndConnectBonus
-      (yellowNum, yellowConnectBonus) = disappearNumsForEachPuyo[YELLOW].calcDisappearNumAndConnectBonus
-      (purpleNum, purpleConnectBonus) = disappearNumsForEachPuyo[PURPLE].calcDisappearNumAndConnectBonus
+      (redNum, redConnectBonus) = numsInConnectComponentArray[RED].totalNumAndConnectBonus
+      (greenNum, greenConnectBonus) = numsInConnectComponentArray[GREEN].totalNumAndConnectBonus
+      (blueNum, blueConnectBonus) = numsInConnectComponentArray[BLUE].totalNumAndConnectBonus
+      (yellowNum, yellowConnectBonus) = numsInConnectComponentArray[YELLOW].totalNumAndConnectBonus
+      (purpleNum, purpleConnectBonus) = numsInConnectComponentArray[PURPLE].totalNumAndConnectBonus
 
-      chainBonus = ChainBonuses[i.succ]
+      chainBonus = ChainBonuses[chainIdx.succ]
       connectBonus = redConnectBonus + greenConnectBonus + blueConnectBonus + yellowConnectBonus + purpleConnectBonus
       colorBonus = ColorBonuses[
         (redNum > 0).int + (greenNum > 0).int + (blueNum > 0).int + (yellowNum > 0).int + (purpleNum > 0).int

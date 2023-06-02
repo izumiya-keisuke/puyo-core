@@ -38,7 +38,7 @@ main()
 
     MmSeq = @["refc", "orc", "arc"]
 
-    AlternativeValues = [@["altSingleColor"]]
+    AlternativeValues = [@["altPrimitiveColor"]]
     DefineConvert = (s: seq[string]) => s.mapIt(if it == "": it else: &"-d:{it}")
     Convert = (s: seq[seq[string]]) => s.mapIt it.DefineConvert.join " "
     CompareSeq =
@@ -48,7 +48,7 @@ main()
         of OFF:
           @[""]
         of ON:
-          if AlternativeValues.len == 1: AlternativeValues[0]
+          if AlternativeValues.len == 1: AlternativeValues[0].DefineConvert
           else: AlternativeValues.product.Convert
         of BOTH:
           if AlternativeValues.len == 1: (AlternativeValues[0] & @[""]).DefineConvert

@@ -1,5 +1,4 @@
-## This module implements cells.
-## A "cell" means a single puyo or a blank.
+## This module implements the cell.
 ##
 
 import options
@@ -20,9 +19,13 @@ type
   ColorPuyo* = range[RED .. PURPLE]
   Puyo* = range[HARD .. PURPLE]
 
+# ------------------------------------------------
+# Cell <-> string
+# ------------------------------------------------
+
 func toCell*(str: string): Option[Cell] {.inline.} =
-  ## Converts the string to a cell.
-  ## If the conversion fails, returns none.
+  ## Converts :code:`str` to the cell.
+  ## If the conversion fails, returns :code:`none(Cell)`.
   const StrToCell = collect:
     for cell in Cell:
       {$cell: cell.some}

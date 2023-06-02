@@ -14,22 +14,19 @@ import ../../src/puyo_core/pair
 import ../../src/puyo_core/position
 
 proc main* =
-  # colorNum, garbageNum, puyoNum
-  block:
-    let env = ("......\n".repeat(11) & "rrb...\noogg..\n======\nry\ngg").toEnv(false).get
-
-    check env.colorNum(RED) == 3
-    check env.colorNum(BLUE) == 1
-    check env.colorNum(PURPLE) == 0
-    check env.colorNum == 9
-    check env.garbageNum == 2
-    check env.puyoNum == 11
+  # ------------------------------------------------
+  # Pair
+  # ------------------------------------------------
 
   # addPair
   block:
     var env = ("......\n".repeat(12) & "o.....\n======\nbb").toEnv(false).get
     env.addPair
     check env.pairs.len == 2
+
+  # ------------------------------------------------
+  # Constructor
+  # ------------------------------------------------
 
   # reset
   block:
@@ -44,7 +41,26 @@ proc main* =
     check env.field == zeroField()
     check env.pairs.len == 0
 
-  # move, moveWithRoughTracking, moveWithDetailedTracking, moveWithFullTracking
+  # ------------------------------------------------
+  # Number
+  # ------------------------------------------------
+
+  # colorNum, garbageNum, puyoNum
+  block:
+    let env = ("......\n".repeat(11) & "rrb...\noogg..\n======\nry\ngg").toEnv(false).get
+
+    check env.colorNum(RED) == 3
+    check env.colorNum(BLUE) == 1
+    check env.colorNum(PURPLE) == 0
+    check env.colorNum == 9
+    check env.garbageNum == 2
+    check env.puyoNum == 11
+
+  # ------------------------------------------------
+  # Move
+  # ------------------------------------------------
+
+  # move, moveWithRoughTracking, moveWithDetailTracking, moveWithFullTracking
   block:
     let
       useColors = ColorPuyo.fullSet.some
@@ -61,10 +77,10 @@ proc main* =
     disappearNums.add [0.Natural, 1, 0, 0, 5, 0, 0]
     disappearNums.add [0.Natural, 0, 0, 10, 0, 0, 0]
     disappearNums.add [0.Natural, 1, 4, 0, 0, 0, 4]
-    var detailedDisappearNums: seq[array[Puyo, seq[Natural]]]
-    detailedDisappearNums.add [@[], @[1.Natural], @[], @[], @[5.Natural], @[], @[]]
-    detailedDisappearNums.add [@[], @[], @[], @[4.Natural, 6], @[], @[], @[]]
-    detailedDisappearNums.add [@[], @[1.Natural], @[4.Natural], @[], @[], @[], @[4.Natural]]
+    var detailDisappearNums: seq[array[Puyo, seq[Natural]]]
+    detailDisappearNums.add [@[], @[1.Natural], @[], @[], @[5.Natural], @[], @[]]
+    detailDisappearNums.add [@[], @[], @[], @[4.Natural, 6], @[], @[], @[]]
+    detailDisappearNums.add [@[], @[1.Natural], @[4.Natural], @[], @[], @[], @[4.Natural]]
 
     block:
       var env = envBefore
@@ -73,7 +89,7 @@ proc main* =
       check res.chainNum == chainNum
       check res.totalDisappearNums.isNone
       check res.disappearNums.isNone
-      check res.detailedDisappearNums.isNone
+      check res.detailDisappearNums.isNone
 
     block:
       var env = envBefore
@@ -82,16 +98,16 @@ proc main* =
       check res.chainNum == chainNum
       check res.totalDisappearNums == totalDisappearNums.some
       check res.disappearNums.isNone
-      check res.detailedDisappearNums.isNone
+      check res.detailDisappearNums.isNone
 
     block:
       var env = envBefore
-      let res = env.moveWithDetailedTracking(pos, false)
+      let res = env.moveWithDetailTracking(pos, false)
       check env == envAfter
       check res.chainNum == chainNum
       check res.totalDisappearNums == totalDisappearNums.some
       check res.disappearNums == disappearNums.some
-      check res.detailedDisappearNums.isNone
+      check res.detailDisappearNums.isNone
 
     block:
       var env = envBefore
@@ -100,7 +116,11 @@ proc main* =
       check res.chainNum == chainNum
       check res.totalDisappearNums == totalDisappearNums.some
       check res.disappearNums == disappearNums.some
-      check res.detailedDisappearNums == detailedDisappearNums.some
+      check res.detailDisappearNums == detailDisappearNums.some
+
+  # ------------------------------------------------
+  # Env <-> string
+  # ------------------------------------------------
 
   # $, toStr, toUrl, toEnvPositions, toEnv
   block:
@@ -123,6 +143,8 @@ proc main* =
     check env.toUrl(positions.some) == urlWithPos
     check envWithPosStr.toEnvPositions(false) == (env: env, positions: positions).some
     check urlWithPos.toEnvPositions(true) == (env: env, positions: positions).some
+    check envWithPosStr.toEnv(false) == env.some
+    check urlWithPos.toEnv(true) == env.some
 
   # toArrays, toEnv
   block:
@@ -131,8 +153,5 @@ proc main* =
     fieldArray[13][3] = PURPLE
     let env = ("......\n".repeat(12) & "o.p...\n======\nbr").toEnv(false).get
 
-    check env.toArrays == (field: fieldArray, pairs: @[[BLUE, RED]])
+    check env.toArrays == (field: fieldArray, pairs: @[[BLUE.ColorPuyo, RED]])
     check toEnv(fieldArray, [[BLUE.ColorPuyo, RED]]) == env
-
-when isMainModule:
-  main()

@@ -26,10 +26,10 @@ jobs:
 
       - run: nimble -y install nimsimd
 
-      - run: nim c -r -d:bmi2=2 -d:avx2=2 ./tests/makeTest.nim
+      - run: nim c -r ./tests/makeTest.nim
         if: runner.os == 'Linux'
 
-      - run: nim c -r -d:bmi2=2 -d:avx2=0 ./tests/makeTest.nim
+      - run: nim c -r -d:avx2=0 ./tests/makeTest.nim
         if: runner.os == 'Windows'
 
       - run: nim c -r -d:bmi2=0 -d:avx2=0 ./tests/makeTest.nim
