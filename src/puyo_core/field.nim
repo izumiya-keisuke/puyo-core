@@ -1,11 +1,10 @@
-## This module implements common functions relating to a field and exports the implementation of a field.
-## Currently supported implementations are as follows:
-## * `Bitboard <./private/field/single/main.html>`_
-## * `AVX2 <./private/field/double/main.html>`_
+## This module implements the field.
+## The following implementations are supported:
+## * Bitboard (Primitive)
+## * `Bitboard (AVX2) <./private/field/avx2/main.html>`_
 ## 
-## For performance comparison,
-## alternative implementations can be applied by adding the following options when compiling:
-## * :code:`-d:altSingleColor`: [Bitboard] Keep binary fields corresponding to each color.
+## For performance comparison, alternative implementations can be used by the following compile-time options:
+## * :code:`-d:altPrimitiveColor`
 ##
 
 import options
@@ -17,14 +16,21 @@ import tables
 
 import ./cell
 import ./common
-import ./intrinsic
+import ./moveResult
+import ./pair
+import ./position
+import ./private/field/binary
+import ./private/intrinsic
+
 when UseAvx2:
-  import ./private/field/double/main
+  import ./private/field/avx2/disappearResult
+  import ./private/field/avx2/main
 else:
-  when defined(altSingleColor):
-    import ./alternative/field/singleColor/main
+  import ./private/field/primitive/disappearResult
+  when defined(altPrimitiveColor):
+    import ./private/field/primitive/altMainColor
   else:
-    import ./private/field/single/main
+    import ./private/field/primitive/main
 
 export
   Field,
@@ -37,30 +43,165 @@ export
   colorNum,
   garbageNum,
   puyoNum,
-  shiftedUp,
-  shiftedDown,
-  shiftedRight,
-  shiftedLeft,
   connect3,
   connect3V,
   connect3H,
   connect3L,
-  invalidPositions,
-  validPositions,
-  validDoublePositions,
-  isDead,
-  put,
+  shiftedUp,
+  shiftedDown,
+  shiftedRight,
+  shiftedLeft,
   disappear,
   willDisappear,
-  fall,
-  move,
-  moveWithRoughTracking,
-  moveWithDetailedTracking,
-  moveWithFullTracking,
+  put,
+  drop,
   toArray,
   toField
 
+# ------------------------------------------------
+# Property
+# ------------------------------------------------
+
+func isDead*(field: Field): bool {.inline.} =
+  ## Returns :code:`true` if :code:`field` is in a defeated state
+  field.exist.isDead
+
+# ------------------------------------------------
+# Position
+# ------------------------------------------------
+
+func invalidPositions*(field: Field): set[Position] {.inline.} =
+  ## Returns the invalid positions.
+  field.exist.invalidPositions
+
+func validPositions*(field: Field): set[Position] {.inline.} =
+  ## Returns the valid positions.
+  field.exist.validPositions
+
+func validDoublePositions*(field: Field): set[Position] {.inline.} =
+  ## Returns the valid positions for a double pair.
+  field.exist.validDoublePositions
+
+# ------------------------------------------------
+# Shift
+# ------------------------------------------------
+
+func shiftUp*(field: var Field) {.inline.} =
+  ## Applies upward shift to the :code:`field`.
+  field = field.shiftedUp
+
+func shiftDown*(field: var Field) {.inline.} =
+  ## Applies downward shift to the :code:`field`.
+  field = field.shiftedDown
+
+func shiftRight*(field: var Field) {.inline.} =
+  ## Applies rightward shift to the :code:`field`.
+  field = field.shiftedRight
+
+func shiftLeft*(field: var Field) {.inline.} =
+  ## Applies leftward shift to the :code:`field`.
+  field = field.shiftedLeft
+
+# ------------------------------------------------
+# Move
+# ------------------------------------------------
+
+func move*(field: var Field, pair: Pair, pos: Position): MoveResult {.inline, discardable.} =
+  ## Puts the :code:`pair` and advance the :code:`field` until the chain ends.
+  ## This function tracks:
+  ## * Number of chains
+  field.put pair, pos
+
+  while true:
+    if field.disappear.notDisappeared:
+      return
+
+    field.drop
+
+    result.chainNum.inc
+
+func moveWithRoughTracking*(field: var Field, pair: Pair, pos: Position): MoveResult {.inline.} =
+  ## Puts the :code:`pair` and advance the :code:`field` until the chain ends.
+  ## This function tracks:
+  ## * Number of chains
+  ## * Number of each puyoes that disappeared
+  field.put pair, pos
+
+  var totalDisappearNums: array[Puyo, Natural]
+  while true:
+    let disappearResult = field.disappear
+    if disappearResult.notDisappeared:
+      result.totalDisappearNums = some totalDisappearNums
+      return
+
+    field.drop
+
+    result.chainNum.inc
+    for puyo, num in disappearResult.numbers:
+      totalDisappearNums[puyo].inc num
+
+func moveWithDetailTracking*(field: var Field, pair: Pair, pos: Position): MoveResult {.inline.} =
+  ## Puts the :code:`pair` and advance the :code:`field` until the chain ends.
+  ## This function tracks:
+  ## * Number of chains
+  ## * Number of each puyoes that disappeared
+  ## * Number of each puyoes that disappeared in each chain
+  field.put pair, pos
+
+  var
+    totalDisappearNums: array[Puyo, Natural]
+    disappearNums: seq[array[Puyo, Natural]]
+  while true:
+    let disappearResult = field.disappear
+    if disappearResult.notDisappeared:
+      result.totalDisappearNums = some totalDisappearNums
+      result.disappearNums = some disappearNums
+      return 
+
+    field.drop
+
+    result.chainNum.inc
+    let nums = disappearResult.numbers
+    for puyo, num in nums:
+      totalDisappearNums[puyo].inc num
+    disappearNums.add nums
+
+func moveWithFullTracking*(field: var Field, pair: Pair, pos: Position): MoveResult {.inline.} =
+  ## Puts the :code:`pair` and advance the :code:`field` until the chain ends.
+  ## This function tracks:
+  ## * Number of chains
+  ## * Number of each puyoes that disappeared
+  ## * Number of each puyoes that disappeared in each chain
+  ## * Number of each puyoes in each connected component that disappeared in each chain
+  field.put pair, pos
+
+  var
+    totalDisappearNums: array[Puyo, Natural]
+    disappearNums: seq[array[Puyo, Natural]]
+    detailDisappearNums: seq[array[Puyo, seq[Natural]]]
+  while true:
+    let disappearResult = field.disappear
+    if disappearResult.notDisappeared:
+      result.totalDisappearNums = some totalDisappearNums
+      result.disappearNums = some disappearNums
+      result.detailDisappearNums = some detailDisappearNums
+      return 
+
+    field.drop
+
+    result.chainNum.inc
+    let nums = disappearResult.numbers
+    for puyo, num in nums:
+      totalDisappearNums[puyo].inc num
+    disappearNums.add nums
+    detailDisappearNums.add disappearResult.connections
+
+# ------------------------------------------------
+# Field <-> string
+# ------------------------------------------------
+
 func `$`*(field: Field): string {.inline.} =
+  ## Converts :code:`field` to the string representation.
   let fieldArray = field.toArray
   var lines = newSeqOfCap[string] Height
   for row in Row.low .. Row.high:
@@ -79,9 +220,9 @@ const
       {idx: cell}
 
 func toUrl*(field: Field): string {.inline.} =
-  ## Converts the field to a url.
+  ## Converts :code:`field` to the URL.
   let fieldArray = field.toArray
-  var lineStrs = newSeqOfCap[string] Height
+  var lines = newSeqOfCap[string] Height
   for row in Row.low .. Row.high:
     var chars = newSeqOfCap[char] Height div 2
     for i in 0 ..< Width div 2:
@@ -91,13 +232,15 @@ func toUrl*(field: Field): string {.inline.} =
 
       chars.add UrlChars[CellToIdx[cell1] * Cell.fullSet.card + CellToIdx[cell2]]
 
-    lineStrs.add chars.join
+    lines.add chars.join
 
-  return lineStrs.join.strip(trailing = false, chars = {'0'})
+  return lines.join.strip(trailing = false, chars = {'0'})
 
 func toField*(str: string, url: bool): Option[Field] {.inline.} =
-  ## Converts the string to a field.
-  ## If the conversions fails, returns none.
+  ## Converts :code:`str` to the field.
+  ## The string representation or URL is acceptable as :code:`str`,
+  ## and which type of input is specified by the :code:`url`.
+  ## If the conversion fails, returns :code:`none(Field)`.
   if url:
     if str == "":
       return some zeroField()
@@ -133,19 +276,3 @@ func toField*(str: string, url: bool): Option[Field] {.inline.} =
         fieldArray[Row.low.succ i][Col.low.succ j] = cell.get
 
     return some fieldArray.toField
-
-func shiftUp*(field: var Field) {.inline.} =
-  ## Shifts the field up.
-  field = field.shiftedUp
-
-func shiftDown*(field: var Field) {.inline.} =
-  ## Shifts the field down.
-  field = field.shiftedDown
-
-func shiftRight*(field: var Field) {.inline.} =
-  ## Shifts the field right.
-  field = field.shiftedRight
-
-func shiftLeft*(field: var Field) {.inline.} =
-  ## Shifts the field left.
-  field = field.shiftedLeft

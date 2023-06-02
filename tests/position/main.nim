@@ -4,27 +4,47 @@ import unittest
 import ../../src/puyo_core/position {.all.}
 
 proc main* =
+  # ------------------------------------------------
+  # Constructor
+  # ------------------------------------------------
+
+  # makePosition
+  block:
+    check makePosition(5, LEFT) == POS_5L
+
+  # ------------------------------------------------
+  # Property
+  # ------------------------------------------------
+
   # axisCol, childCol, childDir
   block:
     check POS_2R.axisCol == 2
     check POS_2R.childCol == 3
     check POS_2R.childDir == RIGHT
 
-  # shiftedRight, shiftedLeft, shiftRight, shiftLeft
+  # ------------------------------------------------
+  # Move
+  # ------------------------------------------------
+
+  # movedRight, movedLeft, moveRight, moveLeft
   block:
     for (pos, answer) in [(POS_2R, POS_3R), (POS_6L, POS_6L)]:
-      check pos.shiftedRight == answer
+      check pos.movedRight == answer
 
       var pos2 = pos
-      pos2.shiftRight
+      pos2.moveRight
       check pos2 == answer
 
     for (pos, answer) in [(POS_3D, POS_2D), (POS_1U, POS_1U)]:
-      check pos.shiftedLeft == answer
+      check pos.movedLeft == answer
 
       var pos2 = pos
-      pos2.shiftLeft
+      pos2.moveLeft
       check pos2 == answer
+
+  # ------------------------------------------------
+  # Rotate
+  # ------------------------------------------------
 
   # rotatedRight, rotatedLeft, rotateRight, rotateLeft
   block:
@@ -42,9 +62,9 @@ proc main* =
       pos2.rotateLeft
       check pos2 == answer
 
-  # makePosition
-  block:
-    check makePosition(5, LEFT) == POS_5L
+  # ------------------------------------------------
+  # Position <-> string
+  # ------------------------------------------------
 
   # toUrl, toPosition
   block:

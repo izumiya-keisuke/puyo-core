@@ -9,6 +9,10 @@ import ../../src/puyo_core/field {.all.}
 import ../../src/puyo_core/position
 
 proc main* =
+  # ------------------------------------------------
+  # Indexer
+  # ------------------------------------------------
+
   # [], []=, insert, removeSqueeze
   block:
     var field = ("......\n".repeat(12) & "g.r...").toField(false).get
@@ -26,16 +30,10 @@ proc main* =
     check field[12, 3] == NONE
     check field[13, 3] == YELLOW
 
-  # shift
-  block:
-    var field1 = ("......\n".repeat(12) & "..o...").toField(false).get
-    let field2 = ("......\n".repeat(12) & "...o..").toField(false).get
+  # ------------------------------------------------
+  # Connect
+  # ------------------------------------------------
 
-    check field2.shiftedLeft == field1
-
-    field1.shiftRight
-    check field1 == field2
-    
   # connect3
   block:
     let
@@ -77,6 +75,63 @@ r.....
     check field.connect3H == (fieldTop & threeH).toField(false).get
     check field.connect3L == (fieldTop & threeL).toField(false).get
 
+  # ------------------------------------------------
+  # Shift
+  # ------------------------------------------------
+
+  # shift
+  block:
+    var field1 = ("......\n".repeat(12) & "..o...").toField(false).get
+    let field2 = ("......\n".repeat(12) & "...o..").toField(false).get
+    let field3 = ("......\n".repeat(11) & "...o..\n......").toField(false).get
+
+    check field2.shiftedLeft == field1
+    check field1.shiftedRight == field2
+    check field2.shiftedUp == field3
+    check field3.shiftedDown == field2
+
+    field1.shiftRight
+    check field1 == field2
+
+    field1.shiftUp
+    check field1 == field3
+    
+  # ------------------------------------------------
+  # Disappear
+  # ------------------------------------------------
+
+  # willDisappear
+  block:
+    var field = zeroField()
+    field[1, 1] = BLUE
+    field[2, 1] = BLUE
+    field[3, 1] = BLUE
+    field[3, 2] = BLUE
+    check not field.willDisappear
+
+    field[4, 2] = BLUE
+    check field.willDisappear
+
+  # ------------------------------------------------
+  # Property
+  # ------------------------------------------------
+
+  # isDead
+  block:
+    var field = zeroField()
+    field[2, 3] = BLUE
+    check field.isDead
+
+    for row in Row.low .. Row.high:
+      for col in Col.low .. Col.high:
+        field[row, col] = BLUE
+    field[2, 3] = NONE
+    check not field.isDead
+
+  # ------------------------------------------------
+  # Position
+  # ------------------------------------------------
+
   # invalidPositions, validPositions, validDoublePositions
   block:
     var field = zeroField()
@@ -104,27 +159,3 @@ r.....
     field[2, 4] = RED
     field[1, 5] = RED
     check field.invalidPositions == {POS_2D, POS_4R, POS_4D, POS_5U, POS_5R, POS_5D, POS_5L, POS_6U, POS_6D, POS_6L}
-
-  # isDead
-  block:
-    var field = zeroField()
-    field[2, 3] = BLUE
-    check field.isDead
-
-    for row in Row.low .. Row.high:
-      for col in Col.low .. Col.high:
-        field[row, col] = BLUE
-    field[2, 3] = NONE
-    check not field.isDead
-
-  # willDisappear
-  block:
-    var field = zeroField()
-    field[1, 1] = BLUE
-    field[2, 1] = BLUE
-    field[3, 1] = BLUE
-    field[3, 2] = BLUE
-    check not field.willDisappear
-
-    field[4, 2] = BLUE
-    check field.willDisappear

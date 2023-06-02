@@ -8,6 +8,10 @@ import ../../src/puyo_core/moveResult {.all.}
 import ../../src/puyo_core/position
 
 proc main* =
+  # ------------------------------------------------
+  # Number, Score
+  # ------------------------------------------------
+
   # puyoNum, colorNum, puyoNums, colorNums, score
   block:
     let envBefore =
@@ -17,7 +21,7 @@ proc main* =
 
     block:
       var env = envBefore
-      let res = env.moveWithDetailedTracking POS_4D
+      let res = env.moveWithDetailTracking POS_4D
       check res.puyoNum == 25
       check res.colorNum == 23
       check res.puyoNums == @[6, 10, 9]

@@ -6,15 +6,22 @@ import ../../src/puyo_core/cell
 import ../../src/puyo_core/pair {.all.}
 
 proc main* =
-  # axis, child
-  block:
-    check BR.axis == BLUE
-    check BR.child == RED
-
+  # ------------------------------------------------
+  # Constructor
+  # ------------------------------------------------
   # makePair
   block:
     check makePair(YELLOW, GREEN) == YG
     check makePair(PURPLE, PURPLE) == PP
+
+  # ------------------------------------------------
+  # Property
+  # ------------------------------------------------
+
+  # axis, child
+  block:
+    check BR.axis == BLUE
+    check BR.child == RED
 
   # axis=, child=
   block:
@@ -29,14 +36,9 @@ proc main* =
     check not PR.isDouble
     check PP.isDouble
 
-  # swapped, swap
-  block:
-    check YB.swapped == BY
-    check RR.swapped == RR
-
-    var pair = GP
-    pair.swap
-    check pair == PG
+  # ------------------------------------------------
+  # Operator
+  # ------------------------------------------------
 
   # ==
   block:
@@ -45,3 +47,16 @@ proc main* =
     pairs2.addLast PG
     pairs2.addFirst RR
     check pairs1 == pairs2
+
+  # ------------------------------------------------
+  # Swap
+  # ------------------------------------------------
+
+  # swapped, swap
+  block:
+    check YB.swapped == BY
+    check RR.swapped == RR
+
+    var pair = GP
+    pair.swap
+    check pair == PG

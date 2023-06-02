@@ -58,6 +58,21 @@ rgybgy
 ======
 bg""".toEnv(false).get
 
+proc disappear: Duration =
+  var field = zeroField()
+  field[5, 4] = RED
+  field[5, 5] = RED
+  field[5, 5] = RED
+  field[6, 4] = RED
+  core result:
+    field.disappear
+
+proc drop: Duration =
+  var field = zeroField()
+  field[2, 3] = RED
+  core result:
+    field.drop
+
 proc move: Duration =
   var env2 = env
   core result:
@@ -68,10 +83,10 @@ proc moveWithRoughTracking: Duration =
   core result:
     discard env2.moveWithRoughTracking(POS_3U, false)
 
-proc moveWithDetailedTracking: Duration =
+proc moveWithDetailTracking: Duration =
   var env2 = env
   core result:
-    discard env2.moveWithDetailedTracking(POS_3U, false)
+    discard env2.moveWithDetailTracking(POS_3U, false)
 
 proc moveWithFullTracking: Duration =
   var env2 = env
@@ -81,7 +96,9 @@ proc moveWithFullTracking: Duration =
 when isMainModule:
   benchmark indexSetter, 10 ^ 3
   benchmark put, 10 ^ 3
+  benchmark disappear, 10 ^ 3
+  benchmark drop, 10 ^ 3
   benchmark move, 10 ^ 3
   benchmark moveWithRoughTracking, 10 ^ 3
-  benchmark moveWithDetailedTracking, 10 ^ 3
+  benchmark moveWithDetailTracking, 10 ^ 3
   benchmark moveWithFullTracking, 10 ^ 3
