@@ -312,15 +312,15 @@ func put*(field: var Field, pair: Pair, pos: Position) {.inline.} =
 
 func drop*(field: var Field) {.inline.} =
   ## Drops floating puyoes.
-  let existFloor = field.exist + FloorBinaryField
+  let mask = field.exist.toDropMask
 
-  field.hard.drop existFloor
-  field.garbage.drop existFloor
-  field.red.drop existFloor
-  field.green.drop existFloor
-  field.blue.drop existFloor
-  field.yellow.drop existFloor
-  field.purple.drop existFloor
+  field.hard.drop mask
+  field.garbage.drop mask
+  field.red.drop mask
+  field.green.drop mask
+  field.blue.drop mask
+  field.yellow.drop mask
+  field.purple.drop mask
 
 # ------------------------------------------------
 # Field <-> array

@@ -24,26 +24,31 @@ when UseBmi2:
 
   func pext*(a, mask: uint64): uint64 {.header: "<immintrin.h>", importc: "_pext_u64".} ## Parallel bits extract.
   func pext*(a, mask: uint32): uint32 {.header: "<immintrin.h>", importc: "_pext_u32".} ## Parallel bits extract.
+  func pext*(a, mask: uint16): uint16 {.inline.} = uint16 a.uint32.pext mask.uint32 ## Parallel bits extract.
 else:
   import bitops
 
   const
     BitNum64 = 6
     BitNum32 = 5
+    BitNum16 = 4
 
-  type Masks[T: uint64 or uint32] = tuple
-    ## Mask used to compute :code:`pext`.
+  type PextMask*[T: uint64 or uint32 or uint16] = tuple
+    ## Mask used in :code:`pext`.
     mask: T
-    bits: array[max(BitNum64, BitNum32), T] # FIXME: somehow when statement does not work on array's index
+    bits: array[BitNum64, T] # FIXME: somehow when statement does not work on array's index
 
-  func toMasks[T: uint64 or uint32](mask: T): Masks[T] {.inline.} =
-    ## Applies preprocessing to the :code:`mask` to be used for :code:`pext`.
+  func toPextMask*[T: uint64 or uint32 or uint16](mask: T): PextMask[T] {.inline.} =
+    ## Converts :code:`mask` to the pext mask.
     when T is uint64:
       const BitNum = BitNum64
       type SignedT = int64
-    else:
+    elif T is uint32:
       const BitNum = BitNum32
       type SignedT = int32
+    else:
+      const BitNum = BitNum16
+      type SignedT = int16
 
     result.mask = mask
 
@@ -58,9 +63,9 @@ else:
 
     result.bits[^1] = cast[T](-lastMask shl 1)
 
-  func pext[T: uint64 or uint32](a: T, masks: Masks[T]): T {.inline.} =
+  func pext*[T: uint64 or uint32 or uint16](a: T, masks: PextMask[T]): T {.inline.} =
     ## Parallel bits extract.
-    const BitNum = when T is uint64: BitNum64 else: BitNum32
+    const BitNum = when T is uint64: BitNum64 elif T is uint32: BitNum32 else: BitNum16
 
     result = a and masks.mask
 
@@ -68,9 +73,9 @@ else:
       let bit = masks.bits[i]
       result = (result and bit.bitnot) or ((result and bit) shr (1 shl i))
 
-  func pext*[T: uint64 or uint32](a, mask: T): T {.inline.} =
+  func pext*[T: uint64 or uint32 or uint16](a, mask: T): T {.inline.} =
     ## Parallel bits extract.
-    a.pext mask.toMasks
+    a.pext mask.toPextMask
 
 # ------------------------------------------------
 # AVX2

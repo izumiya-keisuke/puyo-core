@@ -6,10 +6,13 @@ import bitops
 import ../../../intrinsic
 import ../../../../common
 
-type BinaryField* = tuple
-  ## Binary field.
-  left: uint64
-  right: uint64
+type
+  BinaryField* = tuple
+    ## Binary field.
+    left: uint64
+    right: uint64
+
+  DropMask* = array[Col, when UseBmi2: uint64 else: PextMask[uint64]] ## Mask used in :code:`drop`.
 
 const
   ZeroBinaryField* = (left: 0'u64, right: 0'u64).BinaryField ## Binary field with all elements zero.
@@ -211,30 +214,30 @@ func shiftedLeftWithoutTrim*(field: BinaryField): BinaryField {.inline.} =
 # Operation
 # ------------------------------------------------
 
-func drop(fieldMember: uint64, existWithFloor: uint64): uint64 {.inline.} =
+func toColumnArray(field: BinaryField): array[Col, uint64] {.inline.} =
+  ## Converts :code:`field` to the integer array corresponding to each column.
+  result[1] = field.left.bitsliced 33 ..< 48
+  result[2] = field.left.bitsliced 17 ..< 32
+  result[3] = field.left.bitsliced 1 ..< 16
+  result[4] = field.right.bitsliced 49 ..< 64
+  result[5] = field.right.bitsliced 33 ..< 48
+  result[6] = field.right.bitsliced 17 ..< 32
+
+func toDropMask*(existField: BinaryField): DropMask {.inline.} =
+  ## Converts :code:`existField` to the drop mask.
+  let existFloor = (existField + FloorBinaryField).toColumnArray
+
+  for col in Col.low .. Col.high:
+    result[col] = when UseBmi2: existFloor[col] else: existFloor[col].toPextMask
+
+func drop*(field: var BinaryField, mask: DropMask) {.inline.} =
   ## Drops floating cells.
-  let
-    col3 = fieldMember.bitsliced 49 ..< 64
-    col2 = fieldMember.bitsliced 33 ..< 48
-    col1 = fieldMember.bitsliced 17 ..< 32
-    col0 = fieldMember.bitsliced 1 ..< 16
+  let fieldArray = field.toColumnArray
 
-    exist3 = existWithFloor.bitsliced 49 ..< 64
-    exist2 = existWithFloor.bitsliced 33 ..< 48
-    exist1 = existWithFloor.bitsliced 17 ..< 32
-    exist0 = existWithFloor.bitsliced 1 ..< 16
-
-    newCol3 = col3.pext exist3
-    newCol2 = col2.pext exist2
-    newCol1 = col1.pext exist1
-    newCol0 = col0.pext exist0
-
-  return bitor(newCol3 shl 49, newCol2 shl 33, newCol1 shl 17, newCol0 shl 1)
-
-func drop*(field: var BinaryField, existWithFloor: BinaryField) {.inline.} =
-  ## Drops floating cells.
-  field.left = field.left.drop existWithFloor.left
-  field.right = field.right.drop existWithFloor.right
+  field.left =
+    bitor(fieldArray[1].pext(mask[1]) shl 33, fieldArray[2].pext(mask[2]) shl 17, fieldArray[3].pext(mask[3]) shl 1)
+  field.right =
+    bitor(fieldArray[4].pext(mask[4]) shl 49, fieldArray[5].pext(mask[5]) shl 33, fieldArray[6].pext(mask[6]) shl 17)
 
 # ------------------------------------------------
 # BinaryField <-> array
