@@ -134,7 +134,7 @@ func moveLeft*(pos: var Position) {.inline.} =
 # ------------------------------------------------
 
 func rotatedRight*(pos: Position): Position {.inline.} =
-  ## Returns the position obtained by applying a right rotation to :code:`pos`.
+  ## Returns the position obtained by applying a right (clockwise) rotation to :code:`pos`.
   const RightRotatePositions: array[Position, Position] = [
     POS_1R, POS_2R, POS_3R, POS_4R, POS_5R, POS_5R,
     POS_1D, POS_2D, POS_3D, POS_4D, POS_5D,
@@ -144,7 +144,7 @@ func rotatedRight*(pos: Position): Position {.inline.} =
   return RightRotatePositions[pos]
 
 func rotatedLeft*(pos: Position): Position {.inline.} =
-  ## Returns the position obtained by applying a left rotation to :code:`pos`.
+  ## Returns the position obtained by applying a left (counterclockwise) rotation to :code:`pos`.
   const LeftRotatePositions: array[Position, Position] = [
     POS_2L, POS_2L, POS_3L, POS_4L, POS_5L, POS_6L,
     POS_1U, POS_2U, POS_3U, POS_4U, POS_5U,
