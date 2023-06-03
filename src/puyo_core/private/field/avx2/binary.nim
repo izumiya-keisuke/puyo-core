@@ -2,7 +2,6 @@
 ##
 
 import bitops
-import sequtils
 
 import nimsimd/avx2
 
@@ -12,6 +11,8 @@ import ../../../common
 type
   BinaryField* = M256i ## Binary field; [color1:col0, ..., color1:col7, color2:col0, ..., color2:col7]
   WhichColor* = tuple[color1: int64, color2: int64] ## Indicates which color is specified.
+
+  DropMask* = array[Width * 2, when UseBmi2: uint16 else: PextMask[uint16]] ## Mask used in :code:`drop`.
 
 # ------------------------------------------------
 # Constructor
@@ -212,17 +213,24 @@ func shiftedLeftWithoutTrim*(field: BinaryField): BinaryField {.inline.} =
 # Operation
 # ------------------------------------------------
 
-func drop*(field: var BinaryField, existWithFloor: BinaryField) {.inline.} =
+func toDropMask*(existField: BinaryField): DropMask {.inline.} =
+  ## Converts :code:`existField` to the drop mask.
+  let existArray = cast[array[16, uint16]](existField + floorBinaryField())
+
+  for col in 1 .. 6:
+    result[col.pred] = when UseBmi2: existArray[col] else: existArray[col].toPextMask
+  for col in 9 .. 14:
+    result[col.pred 3] = when UseBmi2: existArray[col] else: existArray[col].toPextMask
+
+func drop*(field: var BinaryField, mask: DropMask) {.inline.} =
   ## Drops floating cells.
-  let
-    fieldArray = cast[array[16, uint16]](field)
-    existArray = cast[array[16, uint16]](existWithFloor)
+  let fieldArray = cast[array[16, uint16]](field)
 
   var resultArray: array[16, uint16]
-  for i in 1 .. 6:
-    resultArray[i] = uint16 fieldArray[i].uint32.pext existArray[i]
-  for i in 9 .. 14:
-    resultArray[i] = uint16 fieldArray[i].uint32.pext existArray[i]
+  for col in 1 .. 6:
+    resultArray[col] = fieldArray[col].pext mask[col.pred]
+  for col in 9 .. 14:
+    resultArray[col] = fieldArray[col].pext mask[col.pred 3]
 
   field = cast[BinaryField](resultArray)
 

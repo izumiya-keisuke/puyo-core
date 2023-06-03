@@ -287,12 +287,11 @@ func put*(field: var Field, pair: Pair, pos: Position) {.inline.} =
 
 func drop*(field: var Field) {.inline.} =
   ## Drops floating puyoes.
-  # TODO: use pext mask
-  let existFloor = field.exist + FloorBinaryField
+  let mask = field.exist.toDropMask
 
-  field.bit2.drop existFloor
-  field.bit1.drop existFloor
-  field.bit0.drop existFloor
+  field.bit2.drop mask
+  field.bit1.drop mask
+  field.bit0.drop mask
 
 # ------------------------------------------------
 # Field <-> array

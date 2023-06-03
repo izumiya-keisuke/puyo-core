@@ -6,11 +6,14 @@ import bitops
 import ../../../intrinsic
 import ../../../../common
 
-type BinaryField* = tuple
-  ## Binary field.
-  left: uint32
-  center: uint32
-  right: uint32
+type
+  BinaryField* = tuple
+    ## Binary field.
+    left: uint32
+    center: uint32
+    right: uint32
+
+  DropMask* = array[Col, when UseBmi2: uint32 else: PextMask[uint32]] ## Mask used in :code:`drop`.
 
 const
   ZeroBinaryField* = (left: 0'u32, center: 0'u32, right: 0'u32).BinaryField ## Binary field with all elements zero.
@@ -246,25 +249,29 @@ func shiftedLeftWithoutTrim*(field: BinaryField): BinaryField {.inline.} =
 # Operation
 # ------------------------------------------------
 
-func drop(fieldMember: uint32, existWithFloor: uint32): uint32 {.inline.} =
+func toColumnArray(field: BinaryField): array[Col, uint32] {.inline.} =
+  ## Converts :code:`field` to the integer array corresponding to each column.
+  result[1] = field.left.bitsliced 17 ..< 32
+  result[2] = field.left.bitsliced 1 ..< 16
+  result[3] = field.center.bitsliced 17 ..< 32
+  result[4] = field.center.bitsliced 1 ..< 16
+  result[5] = field.right.bitsliced 17 ..< 32
+  result[6] = field.right.bitsliced 1 ..< 16
+
+func toDropMask*(existField: BinaryField): DropMask {.inline.} =
+  ## Converts :code:`existField` to the drop mask.
+  let existFloor = (existField + FloorBinaryField).toColumnArray
+
+  for col in Col.low .. Col.high:
+    result[col] = when UseBmi2: existFloor[col] else: existFloor[col].toPextMask
+
+func drop*(field: var BinaryField, mask: DropMask) {.inline.} =
   ## Drops floating cells.
-  let
-    col1 = fieldMember.bitsliced 17 ..< 32
-    col0 = fieldMember.bitsliced 1 ..< 16
+  let fieldArray = field.toColumnArray
 
-    exist1 = existWithFloor.bitsliced 17 ..< 32
-    exist0 = existWithFloor.bitsliced 1 ..< 16
-
-    newCol1 = col1.pext exist1
-    newCol0 = col0.pext exist0
-
-  return bitor(newCol1 shl 17, newCol0 shl 1)
-
-func drop*(field: var BinaryField, existWithFloor: BinaryField) {.inline.} =
-  ## Drops floating cells.
-  field.left = field.left.drop existWithFloor.left
-  field.center = field.center.drop existWithFloor.center
-  field.right = field.right.drop existWithFloor.right
+  field.left = bitor(fieldArray[1].pext(mask[1]) shl 17, fieldArray[2].pext(mask[2]) shl 1)
+  field.center = bitor(fieldArray[3].pext(mask[3]) shl 17, fieldArray[4].pext(mask[4]) shl 1)
+  field.right = bitor(fieldArray[5].pext(mask[5]) shl 17, fieldArray[6].pext(mask[6]) shl 1)
 
 # ------------------------------------------------
 # BinaryField <-> array
