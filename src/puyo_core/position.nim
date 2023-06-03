@@ -176,7 +176,7 @@ func toUrl*(pos: Option[Position]): string {.inline.} =
 func toPosition*(str: string, url: bool): Option[Option[Position]] {.inline.} =
   ## Converts :code:`str` to the position.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversion fails, returns :code:`none(Option[Position])`.
   ## :code:`some(none(Position))` means that no position is given.
   runnableExamples:

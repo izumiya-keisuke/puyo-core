@@ -182,7 +182,7 @@ func toUrl*(pairs: Pairs, positions = Positions.none): string {.inline.} =
 func toPairPosition*(str: string, url: bool): Option[tuple[pair: Pair, pos: Option[Position]]] {.inline.} =
   ## Converts :code:`str` to the pair and the position.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversions fails, returns :code:`none`.
   const
     UrlToPair = collect:
@@ -220,7 +220,7 @@ func toPairPosition*(str: string, url: bool): Option[tuple[pair: Pair, pos: Opti
 func toPairsPositions*(str: string, url: bool): Option[tuple[pairs: Pairs, positions: Positions]] {.inline.} =
   ## Converts :code:`str` to the pairs and the positions.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversions fails, returns :code:`none`.
   if str == "":
     return some (pairs: initDeque[Pair](), positions: newSeq[Option[Position]]())
@@ -252,7 +252,7 @@ func toPairsPositions*(str: string, url: bool): Option[tuple[pairs: Pairs, posit
 func toPair*(str: string, url: bool): Option[Pair] {.inline.} =
   ## Converts :code:`str` to the pair.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversions fails, returns :code:`none(Pair)`.
   let pairPos = str.toPairPosition url
   return if pairPos.isSome: pairPos.get.pair.some else: Pair.none
@@ -260,7 +260,7 @@ func toPair*(str: string, url: bool): Option[Pair] {.inline.} =
 func toPairs*(str: string, url: bool): Option[Pairs] {.inline.} =
   ## Converts :code:`str` to the pairs.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversions fails, returns :code:`none(Pairs)`.
   let pairsPositions = str.toPairsPositions url
   return if pairsPositions.isSome: pairsPositions.get.pairs.some else: Pairs.none
