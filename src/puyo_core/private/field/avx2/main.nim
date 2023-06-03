@@ -217,7 +217,7 @@ func disappear*(field: var Field): DisappearResult {.inline, discardable.} =
   result.greenBlue = field.greenBlue.disappeared
   result.yellowPurple = field.yellowPurple.disappeared
 
-  result.color = sum(result.red, result.greenBlue, result.yellowPurple)
+  result.color = sum(result.red, result.greenBlue, result.yellowPurple).exist
   result.garbage = result.color.expanded * field.hardGarbage
 
   field.hardGarbage -= result.garbage
