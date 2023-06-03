@@ -65,5 +65,5 @@ Writing Test
 ============
 
 #. Create a new directory directly under the :code:`tests` directory.
-#. Create a file :code:`main.nim` in the directory.
+#. Create a new file :code:`main.nim` in the directory.
 #. Write the entry point of the test as :code:`main()` procedure in the file.
