@@ -10,5 +10,8 @@ proc main* =
 
   # toCell
   block:
-    check ".".toCell == some NONE
-    check "r".toCell == some RED
+    for cell in Cell:
+      check ($cell).toCell == some cell
+
+    check "".toCell == none Cell
+    check "H".toCell == none Cell
