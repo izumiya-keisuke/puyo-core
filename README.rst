@@ -60,3 +60,10 @@ For performance comparison, alternative implementations can be used by giving op
 =================  ===========================================================
 altPrimitiveColor  [Primitive] Keep binary fields corresponding to each color.
 =================  ===========================================================
+
+Writing Test
+============
+
+#. Create a new directory directly under the :code:`tests` directory.
+#. Create a file :code:`main.nim` in the directory.
+#. Write the entry point of the test as :code:`main()` procedure in the file.
