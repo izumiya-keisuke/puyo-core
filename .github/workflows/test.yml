@@ -1,4 +1,4 @@
-name: Run Test
+name: Run Tests
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -9,6 +9,8 @@ permissions:
 
 on:
   push:
+    branches:
+      - "**"
 
   workflow_dispatch:
 
@@ -26,22 +28,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/cache@v1
+      - uses: actions/cache@v3
         with:
           path: ~/.nimble
           key: ${{ runner.os }}-nimble-${{ hashFiles('*.nimble') }}
-        if: runner.os != 'Windows'
-
+          restore-keys: |
+            ${{ runner.os }}-nimble-
       - uses: jiro4989/setup-nim-action@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: nimble -y install nimsimd
+      - run: nimble -y install -d
 
       - run: nim c -r ./tests/makeTest.nim
         if: runner.os == 'Linux'
-
       - run: nim c -r -d:avx2=0 ./tests/makeTest.nim
         if: runner.os == 'Windows'
-
       - run: nim c -r -d:bmi2=0 -d:avx2=0 ./tests/makeTest.nim
         if: runner.os == 'macOS'
 

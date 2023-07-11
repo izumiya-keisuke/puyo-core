@@ -70,7 +70,7 @@ Writing Test
 Contribution
 ============
 
-Please work on the new branch and then submit a PR for the :code:`main` branch.
+Please work on the new branch and then submit a PR to the :code:`main` branch.
 
 *******
 License
