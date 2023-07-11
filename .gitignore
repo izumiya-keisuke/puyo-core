@@ -9,3 +9,5 @@
 
 /benchmark/*
 !/benchmark/*.nim*
+
+/src/htmldocs/
