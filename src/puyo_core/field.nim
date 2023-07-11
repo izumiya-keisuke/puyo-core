@@ -239,7 +239,7 @@ func toUrl*(field: Field): string {.inline.} =
 func toField*(str: string, url: bool): Option[Field] {.inline.} =
   ## Converts :code:`str` to the field.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversion fails, returns :code:`none(Field)`.
   if url:
     if str == "":

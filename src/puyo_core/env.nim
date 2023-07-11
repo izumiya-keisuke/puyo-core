@@ -208,7 +208,7 @@ func toEnvPositions*(
 ): Option[tuple[env: Env, positions: Positions]] {.inline.} =
   ## Converts :code:`str` to the environment and positions.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversions fails, returns :code:`none`.
   var
     field: Option[Field]
@@ -249,7 +249,7 @@ func toEnvPositions*(
 func toEnv*(str: string, url: bool, useColors = set[ColorPuyo].none, seed = 0'i64): Option[Env] {.inline.} =
   ## Converts :code:`str` to the environment.
   ## The string representation or URL is acceptable as :code:`str`,
-  ## and which type of input is specified by the :code:`url`.
+  ## and which type of input is specified by :code:`url`.
   ## If the conversions fails, returns :code:`none`.
   let envPositions = str.toEnvPositions(url, useColors, seed)
   return if envPositions.isSome: some envPositions.get.env else: Env.none
